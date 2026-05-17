@@ -1,37 +1,33 @@
-import { useState } from 'react';
+import { useReducer, useEffect } from 'react';
 import Board from './components/Board';
+import { reducer, initialState } from './reducer';
 import './App.css';
 
-const initialData = {
-  columns: [
-    { id: 'todo',       title: 'To Do' },
-    { id: 'inprogress', title: 'In Progress' },
-    { id: 'done',       title: 'Done' },
-  ],
-  cards: [
-    { id: 'c1', columnId: 'todo',       title: 'ログイン画面の実装',   desc: 'メールアドレス＋パスワード' },
-    { id: 'c2', columnId: 'todo',       title: 'APIエンドポイント設計', desc: 'RESTful設計' },
-    { id: 'c3', columnId: 'inprogress', title: 'DB設計',              desc: 'スキーマ定義' },
-    { id: 'c4', columnId: 'done',       title: '要件定義',             desc: '完了済み' },
-  ],
-};
+function loadState() {
+  try {
+    const saved = localStorage.getItem('kanban-state');
+    return saved ? JSON.parse(saved) : initialState;
+  } catch {
+    return initialState;
+  }
+}
 
 export default function App() {
-  const [data, setData] = useState(initialData);
+  const [state, dispatch] = useReducer(reducer, undefined, loadState);
 
-  const handleCardMove = (cardId, targetColumnId) => {
-    setData(prev => ({
-      ...prev,
-      cards: prev.cards.map(c =>
-        c.id === cardId ? { ...c, columnId: targetColumnId } : c
-      ),
-    }));
-  };
+  useEffect(() => {
+    localStorage.setItem('kanban-state', JSON.stringify(state));
+  }, [state]);
 
   return (
     <div className="app">
       <h1 className="app-title">Kanban Board</h1>
-      <Board columns={data.columns} cards={data.cards} onCardMove={handleCardMove} />
+      <Board
+        columns={state.columns}
+        cards={state.cards}
+        filter={state.filter}
+        dispatch={dispatch}
+      />
     </div>
   );
 }
